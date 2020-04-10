@@ -1,6 +1,25 @@
+import {
+    all,
+    allPass,
+    any,
+    compose,
+    converge,
+    equals,
+    filter,
+    includes,
+    invert,
+    length,
+    lte,
+    not,
+    prop,
+    propEq,
+    propOr,
+    values
+} from "ramda";
+
 /**
  * @file Домашка по FP ч. 1
- * 
+ *
  * Основная задача — написать самому, или найти в FP библиотеках функции anyPass/allPass
  * Эти функции/их аналоги есть и в ramda и в lodash
  *
@@ -14,37 +33,91 @@
  */
 
 // 1. Красная звезда, зеленый квадрат, все остальные белые.
-export const validateFieldN1 = ({star, square, triangle, circle}) => {
-    if (triangle !== 'white' || circle !== 'white') {
-        return false;
-    }
-
-    return star === 'red' && square === 'green';
+export const validateFieldN1 = (input) => {
+    return allPass([
+        propEq('star', 'red'),
+        propEq('square', 'green'),
+        propEq('triangle', 'white'),
+        propEq('circle', 'white'),
+    ])(input);
 };
 
 // 2. Как минимум две фигуры зеленые.
-export const validateFieldN2 = () => false;
+export const validateFieldN2 = (input) => {
+    return compose(lte(2), length, propOr([], 'green'), invert)(input);
+};
 
 // 3. Количество красных фигур равно кол-ву синих.
-export const validateFieldN3 = () => false;
+export const validateFieldN3 = (input) => {
+    const prop = propOr([]);
+    const redsLength = compose(length, prop('red'));
+    const bluesLength = compose(length, prop('blue'));
+    const equalsLengths = converge(equals, [redsLength, bluesLength]);
+
+    return compose(equalsLengths, invert)(input);
+};
 
 // 4. Синий круг, красная звезда, оранжевый квадрат
-export const validateFieldN4 = () => false;
+export const validateFieldN4 = (input) => {
+    return allPass([
+        propEq('circle', 'blue'),
+        propEq('star', 'red'),
+        propEq('square', 'orange'),
+    ])(input);
+};
 
 // 5. Три фигуры одного любого цвета кроме белого.
-export const validateFieldN5 = () => false;
+export const validateFieldN5 = (input) => {
+    const equalsWhite = equals('white');
+    const notWhite = compose(not, equalsWhite);
+
+    return compose(equals(3), length, filter(notWhite), values)(input);
+};
 
 // 6. Две зеленые фигуры (одна из них треугольник), еще одна любая красная.
-export const validateFieldN6 = () => false;
+export const validateFieldN6 = (input) => {
+    const includeTriangle = includes('triangle');
+    const lengthTwo = compose(equals(2), length);
+    const greenProp = propOr([], 'green');
+    const equalsRed = equals('red');
+
+    return allPass([
+        compose(allPass([includeTriangle, lengthTwo]), greenProp, invert),
+        compose(any(equalsRed), values),
+    ])(input);
+};
 
 // 7. Все фигуры оранжевые.
-export const validateFieldN7 = () => false;
+export const validateFieldN7 = (input) => {
+    return compose(all(equals('orange')), values)(input);
+};
 
 // 8. Не красная и не белая звезда.
-export const validateFieldN8 = () => false;
+export const validateFieldN8 = (input) => {
+    const equalsWhite = equals('white');
+    const equalsRed = equals('red');
+    const starProp = prop('star');
+
+    return allPass([
+        compose(not, equalsRed, starProp),
+        compose(not, equalsWhite, starProp),
+    ])(input);
+};
 
 // 9. Все фигуры зеленые.
-export const validateFieldN9 = () => false;
+export const validateFieldN9 = (input) => {
+    return compose(all(equals('green')), values)(input);
+};
 
 // 10. Треугольник и квадрат одного цвета (не белого)
-export const validateFieldN10 = () => false;
+export const validateFieldN10 = (input) => {
+    const equalsWhite = equals('white');
+    const triangleProp = prop('triangle');
+    const squareProp = prop('square');
+
+    return allPass([
+        converge(equals, [triangleProp, squareProp]),
+        compose(not, equalsWhite, triangleProp),
+        compose(not, equalsWhite, squareProp),
+    ])(input);
+};
